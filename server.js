@@ -19,18 +19,17 @@ app.get('/get-stream', async (req, res) => {
 
   let browser;
   try {
-    browser = await puppeteer.launch({
+  browser = await puppeteer.launch({
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
       headless: "new",
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-web-security',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
+        '--no-first-run',
         '--no-zygote',
-        '--single-process'
+        '--disable-gpu'
       ]
     });
 
