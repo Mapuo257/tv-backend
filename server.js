@@ -1,9 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-
-puppeteer.use(StealthPlugin());
+const puppeteer = require('puppeteer');
 
 const app = express();
 app.use(cors());
@@ -23,18 +20,28 @@ app.get('/get-stream', async (req, res) => {
   let browser;
   try {
     browser = await puppeteer.launch({
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
       headless: "new",
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--no-zygote',
+        '--single-process'
       ]
     });
 
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
     
+    // Маскираме браузъра ръчно, за да изглежда като реален потребител
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    });
+
     let m3u8Url = null;
 
     // Прихващаме мрежовия поток по всяко време
@@ -69,7 +76,7 @@ app.get('/get-stream', async (req, res) => {
     // 3. Изчакваме малко за обновяване на плейъра след смяна на епизода
     await new Promise(r => setTimeout(r, 2000));
 
-    // 4. Намираме и кликваме директно върху HTML бутона за Play (icon_play / container_play)
+    // 4. Намираме и кликваме директно върху HTML бутона за Play
     console.log('[+] Търсене и клик на Play бутона в страницата...');
     await page.evaluate(() => {
       const playBtn = document.querySelector('.icon_play') || 
