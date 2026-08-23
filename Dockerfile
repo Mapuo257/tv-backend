@@ -1,13 +1,7 @@
 FROM node:18-alpine
 
-# Инсталираме Chromium и базови шрифтове
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
+# Инсталираме Chromium системно в контейнера
+RUN apk add --no-cache chromium
 
 WORKDIR /app
 
